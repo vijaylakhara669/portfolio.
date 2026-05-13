@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vijay Lakhara — Video Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=Space+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080808;
+    --surface: #111111;
+    --card: #161616;
+    --accent: #FF3C00;
+    --accent2: #FFB800;
+    --text: #F0EDE8;
+    --muted: #666;
+    --border: #222;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    padding: 22px 60px;
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 100;
+    background: linear-gradient(to bottom, rgba(8,8,8,0.98), transparent);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .nav-logo { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 0.1em; color: var(--text); text-decoration: none; }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 36px; list-style: none; }
+  .nav-links a { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); text-decoration: none; letter-spacing: 0.15em; text-transform: uppercase; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--accent); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+    padding: 100px 60px 80px; position: relative; overflow: hidden;
+  }
+  .hero-bg-text {
+    position: absolute; font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(120px, 22vw, 300px); color: transparent;
+    -webkit-text-stroke: 1px #161616; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); white-space: nowrap; pointer-events: none; z-index: 0;
+  }
+  .hero-tag { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--accent); letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 20px; opacity: 0; animation: fadeUp 0.8s ease forwards 0.2s; }
+  .hero h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(72px, 13vw, 170px); line-height: 0.88; letter-spacing: 0.02em; position: relative; z-index: 1; opacity: 0; animation: fadeUp 0.8s ease forwards 0.4s; }
+  .hero h1 span { color: var(--accent); display: block; }
+  .hero-sub { font-size: 15px; color: var(--muted); margin-top: 28px; max-width: 420px; line-height: 1.75; opacity: 0; animation: fadeUp 0.8s ease forwards 0.6s; }
+  .hero-stats { display: flex; gap: 48px; margin-top: 52px; opacity: 0; animation: fadeUp 0.8s ease forwards 0.8s; }
+  .stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 52px; color: var(--accent2); line-height: 1; }
+  .stat-label { font-size: 10px; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 4px; }
+  .hero-cta { margin-top: 48px; opacity: 0; animation: fadeUp 0.8s ease forwards 1s; }
+  .btn { display: inline-block; padding: 14px 32px; background: var(--accent); color: white; text-decoration: none; font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; transition: background 0.2s, transform 0.2s; }
+  .btn:hover { background: #e03500; transform: translateY(-2px); }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--muted); margin-left: 16px; }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); background: transparent; }
+
+  /* SECTIONS */
+  section { padding: 100px 60px; }
+  .divider { height: 1px; background: linear-gradient(to right, transparent, var(--border), transparent); margin: 0 60px; }
+  .section-label { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--accent); letter-spacing: 0.4em; text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 12px; }
+  .section-label::before { content: ''; width: 24px; height: 1px; background: var(--accent); }
+  .section-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(48px, 7vw, 84px); line-height: 1; letter-spacing: 0.02em; margin-bottom: 56px; }
+
+
+  /* REEL / SHORTS - Portrait 9:16 */
+  .reel-item { grid-column: span 4 !important; }
+  .reel-wrap { position: relative; width: 100%; padding-bottom: 177.78%; /* 9:16 */ overflow: hidden; background: #000; }
+  .reel-wrap video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+  .reel-item:hover .reel-wrap video { transform: scale(1.04); }
+
+
+  /* SHORTS / PORTRAIT items */
+  .short-item { grid-column: span 3 !important; }
+  .short-thumb { position: relative; width: 100%; padding-bottom: 177.78%; overflow: hidden; background: #0a0a0a; }
+  .short-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+  .short-item:hover .short-thumb img { transform: scale(1.04); }
+  .short-thumb .yt-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+
+  /* Landscape YT thumb fix */
+  .yt-thumb { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; background: #0a0a0a; }
+  .yt-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; opacity: 1; }
+  .work-item:hover .yt-thumb img { transform: scale(1.04); }
+
+  /* CATEGORY TABS */
+  .tabs { display: flex; gap: 4px; margin-bottom: 40px; flex-wrap: wrap; }
+  .tab { font-family: 'Space Mono', monospace; font-size: 10px; padding: 10px 20px; border: 1px solid var(--border); color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; background: none; }
+  .tab:hover, .tab.active { border-color: var(--accent); color: var(--accent); background: rgba(255,60,0,0.06); }
+
+  /* WORK GRID */
+  .work-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; }
+  .work-cat { display: none; }
+  .work-cat.visible { display: contents; }
+
+  .work-item {
+    position: relative; overflow: hidden; background: var(--card);
+    border: 1px solid var(--border); cursor: pointer;
+    transition: border-color 0.3s;
+  }
+  .work-item:hover { border-color: #333; }
+
+  /* Grid layout */
+  .span-8 { grid-column: span 8; }
+  .span-6 { grid-column: span 6; }
+  .span-4 { grid-column: span 4; }
+  .span-12 { grid-column: span 12; }
+
+  .work-item .thumb-wrap { position: relative; overflow: hidden; }
+  .work-item video, .work-item iframe, .work-item .yt-thumb {
+    width: 100%; display: block;
+  }
+  .work-item video { height: 300px; object-fit: cover; transition: transform 0.5s ease; }
+  .span-8 video { height: 380px; }
+  .span-12 video { height: 360px; }
+  .work-item:hover video { transform: scale(1.04); }
+
+  /* YouTube embed */
+  .yt-thumb { position: relative; padding-bottom: 56.25%; height: 0; background: #000; }
+  .yt-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; opacity: 0.85; }
+  .work-item:hover .yt-thumb img { transform: scale(1.04); opacity: 1; }
+  .yt-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 64px; height: 64px; background: rgba(255,0,0,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: transform 0.2s, background 0.2s; z-index: 2; }
+  .yt-play svg { width: 22px; height: 22px; fill: white; margin-left: 4px; }
+  .work-item:hover .yt-play { transform: translate(-50%, -50%) scale(1.1); background: red; }
+
+  /* Overlay */
+  .work-overlay {
+    position: absolute; inset: 0; background: linear-gradient(to top, rgba(8,8,8,0.92) 0%, rgba(8,8,8,0.1) 60%, transparent 100%);
+    display: flex; flex-direction: column; justify-content: flex-end; padding: 20px;
+    opacity: 0; transition: opacity 0.3s ease;
+  }
+  .work-item:hover .work-overlay { opacity: 1; }
+  .work-tag { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--accent); letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 6px; }
+  .work-name { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 0.04em; line-height: 1; }
+
+  /* Play button on video items */
+  .play-btn {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
+    width: 56px; height: 56px; background: var(--accent); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: all 0.3s ease; border: none; cursor: pointer; z-index: 10;
+  }
+  .play-btn svg { width: 18px; height: 18px; fill: white; margin-left: 3px; }
+  .work-item:hover .play-btn { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+  /* SKILLS */
+  .skills-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+  .skill-card { background: var(--card); padding: 32px 24px; transition: background 0.2s; }
+  .skill-card:hover { background: #1a1a1a; }
+  .skill-icon { font-size: 26px; margin-bottom: 14px; }
+  .skill-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.05em; margin-bottom: 8px; color: var(--accent2); }
+  .skill-desc { font-size: 13px; color: var(--muted); line-height: 1.65; }
+
+  /* ABOUT */
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+  .about-text p { color: var(--muted); line-height: 1.8; font-size: 15px; margin-bottom: 18px; }
+  .about-text p strong { color: var(--text); }
+  .tools-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+  .tool-tag { font-family: 'Space Mono', monospace; font-size: 10px; padding: 8px 14px; border: 1px solid var(--border); color: var(--muted); letter-spacing: 0.1em; transition: all 0.2s; }
+  .tool-tag:hover { border-color: var(--accent); color: var(--accent); }
+  .about-big-num { font-family: 'Bebas Neue', sans-serif; font-size: clamp(100px, 14vw, 190px); color: transparent; -webkit-text-stroke: 1px var(--border); line-height: 1; position: relative; }
+  .about-big-num span { position: absolute; bottom: 0; left: 0; font-size: 14px; font-family: 'DM Sans', sans-serif; -webkit-text-stroke: 0; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .niches { margin-top: 36px; display: flex; flex-direction: column; gap: 1px; background: var(--border); }
+  .niche-item { background: var(--card); padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; transition: background 0.2s; }
+  .niche-item:hover { background: #1c1c1c; }
+  .niche-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+
+  /* CONTACT */
+  .contact-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
+  .contact-big { font-family: 'Bebas Neue', sans-serif; font-size: clamp(52px, 8vw, 96px); line-height: 0.95; letter-spacing: 0.02em; }
+  .contact-big span { color: var(--accent); }
+  .contact-links { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+  .contact-link { display: flex; align-items: center; gap: 16px; text-decoration: none; padding: 18px 22px; border: 1px solid var(--border); transition: all 0.2s; }
+  .contact-link:hover { border-color: var(--accent); background: rgba(255,60,0,0.04); }
+  .contact-link-icon { font-size: 18px; width: 36px; text-align: center; }
+  .contact-link-info { flex: 1; }
+  .contact-link-label { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--accent); letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 3px; }
+  .contact-link-value { font-size: 13px; color: var(--text); }
+  .contact-link-arrow { color: var(--muted); transition: transform 0.2s, color 0.2s; }
+  .contact-link:hover .contact-link-arrow { transform: translateX(4px); color: var(--accent); }
+
+  /* FOOTER */
+  footer { padding: 36px 60px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); }
+  footer p { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; }
+  footer span { color: var(--accent); }
+
+  /* MODAL */
+  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.96); z-index: 9000; align-items: center; justify-content: center; backdrop-filter: blur(12px); }
+  .modal.active { display: flex; }
+  .modal-inner { position: relative; width: 90vw; max-width: 1000px; }
+  .modal video { width: 100%; max-height: 80vh; object-fit: contain; border: 1px solid var(--border); }
+  .modal-yt { position: relative; padding-bottom: 56.25%; height: 0; }
+  .modal-yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 1px solid var(--border); }
+  .modal-close { position: absolute; top: -44px; right: 0; background: none; border: none; color: var(--text); font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.2em; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+  .modal-close:hover { color: var(--accent); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+  .reveal { opacity: 0; transform: translateY(36px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+
+    .nav-links { display: none; }
+    .hero { padding: 90px 20px 60px; }
+    section { padding: 60px 20px; }
+    .divider { margin: 0 20px; }
+    footer { padding: 28px 20px; flex-direction: column; gap: 10px; text-align: center; }
+    .work-grid { grid-template-columns: 1fr; }
+    .span-8, .span-6, .span-4, .span-12 { grid-column: span 1; }
+    .work-item video { height: 220px !important; }
+    .skills-grid { grid-template-columns: repeat(2, 1fr); }
+    .about-grid { grid-template-columns: 1fr; gap: 40px; }
+    .contact-wrap { grid-template-columns: 1fr; gap: 40px; }
+    .hero-stats { gap: 28px; }
+    .tabs { gap: 6px; }
+  }
+
+  @media (max-width: 768px) {
+    nav { padding: 18px 20px; }
+    .nav-links { display: none; }
+    .hero { padding: 90px 20px 60px; }
+    section { padding: 60px 20px; }
+    .divider { margin: 0 20px; }
+    footer { padding: 28px 20px; flex-direction: column; gap: 10px; text-align: center; }
+    .work-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .span-8, .span-6, .span-4, .span-12 { grid-column: span 3 !important; }
+    .short-item { grid-column: span 1 !important; }
+    .yt-thumb { padding-bottom: 56.25%; }
+    .skills-grid { grid-template-columns: repeat(2, 1fr); }
+    .about-grid { grid-template-columns: 1fr; gap: 40px; }
+    .contact-wrap { grid-template-columns: 1fr; gap: 40px; }
+    .hero-stats { gap: 28px; }
+    .tabs { gap: 6px; }
+    .btn-outline { margin-left: 0; margin-top: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">VL<span>.</span></a>
+  <ul class="nav-links">
+    <li><a href="#work">Work</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-text">EDIT</div>
+  <div class="hero-tag">Video Editor &amp; Motion Graphics — Udaipur, India</div>
+  <h1>Vijay<span>Lakhara</span></h1>
+  <p class="hero-sub">Crafting high-retention video content that keeps viewers watching — and clients coming back. 300+ videos delivered across YouTube, reels, campaigns &amp; more.</p>
+  <div class="hero-stats">
+    <div><div class="stat-num">300+</div><div class="stat-label">Videos Delivered</div></div>
+    <div><div class="stat-num">2.5+</div><div class="stat-label">Years Experience</div></div>
+    <div><div class="stat-num">7+</div><div class="stat-label">Niches Covered</div></div>
+  </div>
+  <div class="hero-cta">
+    <a href="#contact" class="btn">Work With Me</a>
+    <a href="#work" class="btn btn-outline">View Work</a>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- WORK -->
+<section id="work">
+  <div class="section-label reveal">Selected Work</div>
+  <div class="section-title reveal">Recent<br>Projects</div>
+
+  <div class="tabs reveal">
+    <button class="tab active" onclick="filterCat('all', event)">All</button>
+    <button class="tab" onclick="filterCat('youtube', event)">YouTube</button>
+    <button class="tab" onclick="filterCat('reels', event)">Reels & Shorts</button>
+    <button class="tab" onclick="filterCat('vlog', event)">Vlogs</button>
+    <button class="tab" onclick="filterCat('food', event)">Food & Lifestyle</button>
+    <button class="tab" onclick="filterCat('motion', event)">Motion Graphics</button>
+  </div>
+
+  <div class="work-grid" id="workGrid">
+
+    <!-- YouTube Long Form -->
+    <div class="work-item span-8 reveal" data-cat="youtube" onclick="openYT('F62noC5iGes')">
+      <div class="yt-thumb">
+        <img src="https://img.youtube.com/vi/F62noC5iGes/hqdefault.jpg" alt="Education">
+        <div class="yt-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      </div>
+      <div class="work-overlay"><div class="work-tag">YouTube · Education</div><div class="work-name">Long Form Edit</div></div>
+    </div>
+
+    <div class="work-item span-4 reveal" data-cat="youtube" onclick="openYT('DA8A3-ZGCPc')">
+      <div class="yt-thumb">
+        <img src="https://img.youtube.com/vi/DA8A3-ZGCPc/hqdefault.jpg" alt="Education 2">
+        <div class="yt-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      </div>
+      <div class="work-overlay"><div class="work-tag">YouTube · Education</div><div class="work-name">Education Edit</div></div>
+    </div>
+
+    <div class="work-item span-4 reveal" data-cat="youtube" onclick="openYT('aliXLqXrBdw')">
+      <div class="yt-thumb">
+        <img src="https://img.youtube.com/vi/aliXLqXrBdw/hqdefault.jpg" alt="YouTube">
+        <div class="yt-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      </div>
+      <div class="work-overlay"><div class="work-tag">YouTube</div><div class="work-name">YouTube Edit</div></div>
+    </div>
+
+    <!-- Reels - 3 portrait in a row -->
+    <div class="work-item short-item reveal" data-cat="reels" onclick="openYT('Gm7pTFzuTUk')">
+      <div class="short-thumb">
+        <img src="https://img.youtube.com/vi/Gm7pTFzuTUk/hqdefault.jpg" alt="Reel 1">
+        <div class="yt-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      </div>
+      <div class="work-overlay"><div class="work-tag">Reels & Shorts</div><div class="work-name">Short Form Edit</div></div>
+    </div>
+
+    <div class="work-item short-item reveal" data-cat="reels" onclick="openYT('x39ylgS3Gp8')">
+      <div class="short-thumb">
+        <img src="https://img.youtube.com/vi/x39ylgS3Gp8/hqdefault.jpg" alt="Reel 2">
+        <div class="yt-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      </div>
+      <div class="work-overlay"><div class="work-tag">Reels · Delhi Client</div><div class="work-name">Client Reel</div></div>
+    </div>
+
+    <div class="work-item short-item reveal" data-cat="reels" onclick="openYT('s5P09xQZatA')">
+      <div class="short-thumb">
+        <img src="https://img.youtube.com/vi/s5P09xQZatA/hqdefault.jpg" alt="Reel 3">
+        <div class="yt-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      </div>
+      <div class="work-overlay"><div class="work-tag">Short Form</div><div class="work-name">Social Edit</div></div>
+    </div>
+
+    <!-- padding span to complete row -->
+    <div class="work-item short-item reveal" data-cat="vlog" onclick="openYT('isl5KHH79Zg')">
+      <div class="short-thumb">
+        <img src="https://img.youtube.com/vi/isl5KHH79Zg/hqdefault.jpg" alt="Vlog 1">
+        <div class="yt-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      </div>
+      <div class="work-overlay"><div class="work-tag">Vlog · Travel</div><div class="work-name">Travel Vlog</div></div>
+    </div>
+
+    <div class="work-item short-item reveal" data-cat="vlog" onclick="openYT('WZp4Mg-Zcj0')">
+      <div class="short-thumb">
+        <img src="https://img.youtube.com/vi/WZp4Mg-Zcj0/hqdefault.jpg" alt="Vlog 2">
+        <div class="yt-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      </div>
+      <div class="work-overlay"><div class="work-tag">Vlog · Event</div><div class="work-name">Day Vlog Edit</div></div>
+    </div>
+
+    <div class="work-item short-item reveal" data-cat="vlog" onclick="openYT('UPEMFwRwaqo')">
+      <div class="short-thumb">
+        <img src="https://img.youtube.com/vi/UPEMFwRwaqo/hqdefault.jpg" alt="Content">
+        <div class="yt-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      </div>
+      <div class="work-overlay"><div class="work-tag">Content</div><div class="work-name">Content Edit</div></div>
+    </div>
+
+    <!-- Food landscape -->
+    <div class="work-item span-8 reveal" data-cat="food" onclick="openYT('B1nCeweDf58')">
+      <div class="yt-thumb">
+        <img src="https://img.youtube.com/vi/B1nCeweDf58/hqdefault.jpg" alt="Food">
+        <div class="yt-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      </div>
+      <div class="work-overlay"><div class="work-tag">Food & Lifestyle</div><div class="work-name">Ahmedabad Cheesecakes</div></div>
+    </div>
+
+    <!-- Motion - portrait -->
+    <div class="work-item short-item reveal" data-cat="motion" onclick="openYT('BYMGJFijDS4')">
+      <div class="short-thumb">
+        <img src="https://img.youtube.com/vi/BYMGJFijDS4/hqdefault.jpg" alt="Motion 1">
+        <div class="yt-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      </div>
+      <div class="work-overlay"><div class="work-tag">Motion Graphics</div><div class="work-name">Animated Edit</div></div>
+    </div>
+
+    <div class="work-item short-item reveal" data-cat="motion" onclick="openYT('f1h9JawlikM')">
+      <div class="short-thumb">
+        <img src="https://img.youtube.com/vi/f1h9JawlikM/hqdefault.jpg" alt="Motion 2">
+        <div class="yt-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      </div>
+      <div class="work-overlay"><div class="work-tag">Motion · Campaign</div><div class="work-name">Campaign Edit</div></div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-grid">
+    <div class="about-text reveal">
+      <div class="section-label">About Me</div>
+      <div class="section-title" style="font-size:clamp(40px,5vw,60px);margin-bottom:28px;">The Editor<br>Behind the<br>Cuts</div>
+      <p>I'm <strong>Vijay Lakhara</strong>, a freelance video editor and motion graphics artist based in <strong>Udaipur, Rajasthan</strong>. With 2.5+ years of hands-on post-production experience, I've delivered <strong>300+ videos</strong> across YouTube, Instagram, political campaigns, and corporate events.</p>
+      <p>I work across every format — long-form YouTube, short-form Reels & Shorts, mini vlogs, educational content, finance videos, food content, and more. Fast delivery, zero compromise on quality.</p>
+      <p><strong>My goal is simple</strong> — make your content look so good, viewers forget to scroll.</p>
+      <div class="tools-list">
+        <span class="tool-tag">Premiere Pro</span>
+        <span class="tool-tag">After Effects</span>
+        <span class="tool-tag">DaVinci Resolve</span>
+        <span class="tool-tag">Photoshop</span>
+        <span class="tool-tag">Illustrator</span>
+        <span class="tool-tag">CapCut</span>
+      </div>
+    </div>
+    <div class="reveal">
+      <div class="about-big-num">300<span>+ Videos Delivered</span></div>
+      <div class="niches">
+        <div class="niche-item"><span>YouTube Long Form</span><div class="niche-dot"></div></div>
+        <div class="niche-item"><span>Instagram Reels & Shorts</span><div class="niche-dot"></div></div>
+        <div class="niche-item"><span>Motion Graphics</span><div class="niche-dot"></div></div>
+        <div class="niche-item"><span>Political Campaigns</span><div class="niche-dot"></div></div>
+        <div class="niche-item"><span>Finance & Education</span><div class="niche-dot"></div></div>
+        <div class="niche-item"><span>Food & Lifestyle</span><div class="niche-dot"></div></div>
+        <div class="niche-item"><span>Travel & Vlogs</span><div class="niche-dot"></div></div>
+        <div class="niche-item"><span>Mini Documentaries</span><div class="niche-dot"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-wrap">
+    <div class="reveal">
+      <div class="section-label">Get In Touch</div>
+      <div class="contact-big">Let's<br>Work<br><span>Together</span></div>
+      <p style="color:var(--muted);margin-top:20px;font-size:14px;line-height:1.75;">Open for freelance projects, long-term collaborations, and one-off edits. Fast turnaround, professional quality.</p>
+    </div>
+    <div class="contact-links reveal">
+      <a href="mailto:vijaylakhara669@gmail.com" class="contact-link">
+        <div class="contact-link-icon">✉️</div>
+        <div class="contact-link-info">
+          <div class="contact-link-label">Email</div>
+          <div class="contact-link-value">vijaylakhara669@gmail.com</div>
+        </div>
+        <div class="contact-link-arrow">→</div>
+      </a>
+      <a href="https://wa.me/918279020940" target="_blank" class="contact-link">
+        <div class="contact-link-icon">💬</div>
+        <div class="contact-link-info">
+          <div class="contact-link-label">WhatsApp</div>
+          <div class="contact-link-value">+91 82790 20940</div>
+        </div>
+        <div class="contact-link-arrow">→</div>
+      </a>
+      <a href="https://www.instagram.com/vijay_the_creator_?igsh=cXNvYzhjbWE2MTA2&utm_source=qr" target="_blank" class="contact-link">
+        <div class="contact-link-icon">📸</div>
+        <div class="contact-link-info">
+          <div class="contact-link-label">Instagram</div>
+          <div class="contact-link-value">@vijay_the_creator_</div>
+        </div>
+        <div class="contact-link-arrow">→</div>
+      </a>
+      <a href="https://www.instagram.com/vijay_edit_055?igsh=MTI5emRpN2V2ZW1ucw%3D%3D&utm_source=qr" target="_blank" class="contact-link">
+        <div class="contact-link-icon">🎬</div>
+        <div class="contact-link-info">
+          <div class="contact-link-label">Editing Page</div>
+          <div class="contact-link-value">@vijay_edit_055</div>
+        </div>
+        <div class="contact-link-arrow">→</div>
+      </a>
+      <a href="https://www.linkedin.com/in/vijay-lakhara-25aa292ba" target="_blank" class="contact-link">
+        <div class="contact-link-icon">💼</div>
+        <div class="contact-link-info">
+          <div class="contact-link-label">LinkedIn</div>
+          <div class="contact-link-value">Vijay Lakhara</div>
+        </div>
+        <div class="contact-link-arrow">→</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>© 2025 Vijay Lakhara <span>—</span> Video Editor & Motion Graphics</p>
+  <p>Udaipur, Rajasthan <span>•</span> Available Worldwide</p>
+</footer>
+
+<!-- MODAL -->
+<div class="modal" id="modal" onclick="closeModal(event)">
+  <div class="modal-inner" id="modalInner">
+    <button class="modal-close" onclick="closeModalBtn()">✕ &nbsp; Close</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+  // Video hover preview
+  document.querySelectorAll('.work-item').forEach(item => {
+    const video = item.querySelector('video');
+    if (!video) return;
+    item.addEventListener('mouseenter', () => video.play());
+    item.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
+  });
+
+  // Category filter
+  function filterCat(cat, e) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    if(e) e.target.classList.add('active');
+    document.querySelectorAll('.work-item').forEach(item => {
+      if (cat === 'all' || item.dataset.cat === cat) {
+        item.style.display = '';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  }
+
+  // Open video modal
+  function openVideo(src) {
+    const modal = document.getElementById('modal');
+    document.getElementById('modalContent').innerHTML = `<video src="${src}" controls autoplay style="width:100%;max-height:80vh;object-fit:contain;border:1px solid #222;"></video>`;
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  // Open YouTube modal
+  function openYT(id) {
+    const modal = document.getElementById('modal');
+    document.getElementById('modalContent').innerHTML = `<div class="modal-yt"><iframe src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>`;
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal(e) {
+    if (e.target === document.getElementById('modal')) closeModalBtn();
+  }
+
+  function closeModalBtn() {
+    document.getElementById('modal').classList.remove('active');
+    document.getElementById('modalContent').innerHTML = '';
+    document.body.style.overflow = '';
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalBtn(); });
+
+  // Scroll reveal
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
